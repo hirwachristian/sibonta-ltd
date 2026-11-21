@@ -1,0 +1,6 @@
+{
+  "name": "SIBONTA Finance Ltd",
+  "description": "Your Partner for a Brighter Financial Future — Accessible credit, responsible lending, financial advisory, accounting, and debt counselling for SMEs, individual entrepreneurs, women, and young people.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
