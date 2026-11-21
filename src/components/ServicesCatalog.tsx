@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { FINANCIAL_SERVICES, type FinancialServiceItem, type ServiceCategory } from '../data/sibontaData';
 import { cardHover, fadeUp, Reveal, RevealGroup } from './motion/Reveal';
+import { CountUp } from './motion/CountUp';
 import { SHOW_LOAN_PLANNER } from '../config/features';
 
 interface GroupConfig {
@@ -61,9 +62,11 @@ export function ServicesCatalog() {
                 href={`#${anchor}`}
                 className="group p-4 rounded-xl border border-slate-200 bg-[#F4F8FB] hover:border-[#082E43]/40 transition-colors lg:min-w-[13rem] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#082E43]"
               >
-                <span className="block font-mono text-2xl font-semibold text-[#082E43] tabular-nums leading-none">
-                  {FINANCIAL_SERVICES.filter((s) => s.category === category).length}
-                </span>
+                <CountUp
+                  value={FINANCIAL_SERVICES.filter((s) => s.category === category).length}
+                  duration={1.2}
+                  className="block font-mono text-2xl font-semibold text-[#082E43] leading-none"
+                />
                 <span className="block mt-1.5 text-xs font-medium text-slate-600 group-hover:text-[#082E43] transition-colors">
                   {title}
                 </span>

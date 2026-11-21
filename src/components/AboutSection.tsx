@@ -1,6 +1,8 @@
 import { motion } from 'motion/react';
 import aboutImage from '../assets/images/aboutus-web.jpg';
 import { fadeUp, Reveal, RevealGroup } from './motion/Reveal';
+import { CountUp } from './motion/CountUp';
+import { COMPANY_STATS } from '../data/sibontaData';
 
 const VALUES = [
   {
@@ -83,6 +85,18 @@ export function AboutSection() {
                 <span className="text-[#C9DFEA]/90">Kicukiro, Kigali · Rwanda</span>
               </figcaption>
             </figure>
+
+            {/* Key figures (count up when scrolled into view) */}
+            <RevealGroup stagger={0.1} className="mt-8 grid grid-cols-3 gap-4 sm:gap-8 px-1">
+              {COMPANY_STATS.map((stat) => (
+                <motion.div key={stat.label} variants={fadeUp}>
+                  <p className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#082E43] leading-none">
+                    <CountUp value={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
+                  </p>
+                  <p className="mt-2 text-sm sm:text-base text-slate-600">{stat.label}</p>
+                </motion.div>
+              ))}
+            </RevealGroup>
           </Reveal>
         </div>
 

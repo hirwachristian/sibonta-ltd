@@ -480,3 +480,20 @@ export const COMPANY_CONTACT = {
   mapsUrl:
     'https://www.google.com/maps/search/?api=1&query=Diamond+House+Gatenga+Kicukiro+Kigali+Rwanda',
 } as const;
+
+export interface CompanyStat {
+  value: number;
+  prefix?: string;
+  suffix?: string;
+  label: string;
+}
+
+/**
+ * Figures shown under the About Us card (they count up when scrolled into view).
+ * Keep these TRUE and up to date: customers and regulators may treat them as claims.
+ */
+export const COMPANY_STATS: CompanyStat[] = [
+  { value: 1200, suffix: '+', label: 'Clients served' },
+  { value: 24, suffix: '/7', label: 'Support' },
+  { value: 5, suffix: '+', label: 'Years of experience' },
+];
