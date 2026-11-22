@@ -13,7 +13,7 @@ import {
   paragraph,
   pick,
   sendEmail,
-} from './_lib/brevo';
+} from './_lib/brevo.js';
 
 /** Receives a completed loan application and emails it to the company inbox via Brevo. */
 export async function POST(request: Request): Promise<Response> {

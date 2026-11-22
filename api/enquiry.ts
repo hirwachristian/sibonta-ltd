@@ -11,7 +11,7 @@ import {
   keyFacts,
   paragraph,
   sendEmail,
-} from './_lib/brevo';
+} from './_lib/brevo.js';
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
