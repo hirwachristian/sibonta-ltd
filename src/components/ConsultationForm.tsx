@@ -173,7 +173,7 @@ export function ConsultationForm({
                         <span className="block text-sm font-semibold text-slate-900 group-hover:text-[#082E43]">
                           {label}
                         </span>
-                        <span className="block text-xs text-slate-500 truncate">{value}</span>
+                        <span className="block text-xs text-slate-500 break-words">{value}</span>
                       </span>
                     </a>
                   </li>
@@ -216,7 +216,7 @@ export function ConsultationForm({
           </div>
 
           {/* Right Form Container */}
-          <div className="lg:col-span-7 bg-[#FFFDF7] border border-slate-200 rounded-2xl p-6 sm:p-8 lg:p-10">
+          <div className="lg:col-span-7 bg-[#FFFDF7] border border-slate-200 rounded-2xl p-5 sm:p-8 lg:p-10">
             {submittedRef ? (
               <div className="py-6 space-y-5">
                 <div className="flex items-start gap-3">
@@ -294,7 +294,7 @@ export function ConsultationForm({
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Grace N. / Horizon Craft Ltd"
-                      className="w-full px-3.5 py-2.5 text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
+                      className="w-full min-w-0 px-3.5 py-2.5 text-base sm:text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
                     />
                     {errors.fullName && (
                       <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
@@ -315,7 +315,7 @@ export function ConsultationForm({
                       id="customer-profile"
                       value={customerGroup}
                       onChange={(e) => setCustomerGroup(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
+                      className="w-full min-w-0 px-3.5 py-2.5 text-base sm:text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
                     >
                       {CUSTOMER_PROFILES.map((profile) => (
                         <option key={profile} value={profile}>
@@ -340,7 +340,7 @@ export function ConsultationForm({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
-                      className="w-full px-3.5 py-2.5 text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
+                      className="w-full min-w-0 px-3.5 py-2.5 text-base sm:text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
                     />
                     {errors.email && (
                       <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
@@ -363,7 +363,7 @@ export function ConsultationForm({
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+250 700 000 000"
-                      className="w-full px-3.5 py-2.5 text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
+                      className="w-full min-w-0 px-3.5 py-2.5 text-base sm:text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
                     />
                     {errors.phone && (
                       <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
@@ -385,7 +385,7 @@ export function ConsultationForm({
                     id="service-interest"
                     value={selectedService}
                     onChange={(e) => setSelectedService(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
+                    className="w-full min-w-0 px-3.5 py-2.5 text-base sm:text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
                   >
                     <optgroup label="Credit and Loan Products">
                       {FINANCIAL_SERVICES.filter((s) => s.category === 'credit').map((s) => (
@@ -417,7 +417,7 @@ export function ConsultationForm({
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Briefly describe your business need, financing goal, or advisory support request..."
-                    className="w-full px-3.5 py-2.5 text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
+                    className="w-full min-w-0 px-3.5 py-2.5 text-base sm:text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
                   />
                 </div>
 

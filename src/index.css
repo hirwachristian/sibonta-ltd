@@ -19,6 +19,26 @@
   html {
     font-family: var(--font-sans);
     scroll-padding-top: 5rem;
+    /* Keep space for the scrollbar so opening a popup doesn't shift the page sideways. */
+    scrollbar-gutter: stable;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  html,
+  body {
+    /* Nothing can make the page scroll sideways. "clip" (not "hidden") keeps the sticky navbar working. */
+    overflow-x: clip;
+  }
+
+  /* iOS Safari draws date boxes wider than other inputs unless their native styling is reset. */
+  input[type='date'] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 2.75rem;
+  }
+  input[type='date']::-webkit-date-and-time-value {
+    text-align: left;
   }
 
   h1, h2, .font-display {

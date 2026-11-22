@@ -87,10 +87,10 @@ export function AboutSection() {
             </figure>
 
             {/* Key figures (count up when scrolled into view) */}
-            <RevealGroup stagger={0.1} className="mt-8 grid grid-cols-3 gap-4 sm:gap-8 px-1">
+            <RevealGroup stagger={0.1} className="mt-8 grid grid-cols-3 gap-3 sm:gap-8 px-1">
               {COMPANY_STATS.map((stat) => (
                 <motion.div key={stat.label} variants={fadeUp}>
-                  <p className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#082E43] leading-none">
+                  <p className="text-2xl min-[400px]:text-3xl sm:text-4xl font-extrabold tracking-tight text-[#082E43] leading-none">
                     <CountUp value={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
                   </p>
                   <p className="mt-2 text-sm sm:text-base text-slate-600">{stat.label}</p>

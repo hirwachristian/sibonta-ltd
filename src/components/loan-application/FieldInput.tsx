@@ -3,7 +3,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { DECLARATIONS, type ApplicationData, type Field, type Row, type Value } from './schema';
 
 const inputClass = (hasError: boolean) =>
-  `w-full px-3.5 py-2.5 text-sm bg-[#FFFDF7] border rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 ${
+  `w-full min-w-0 px-3.5 py-2.5 text-base sm:text-sm bg-[#FFFDF7] border rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 ${
     hasError
       ? 'border-red-500 focus:border-red-600 focus:ring-red-600'
       : 'border-slate-300 focus:border-[#082E43] focus:ring-[#082E43]'
@@ -55,16 +55,21 @@ export function FieldInput({ field, data, error, onChange }: Props) {
     case 'checks': {
       const isRadio = field.type === 'radio';
       const selected = isRadio ? (value as string) : ((value as string[]) ?? []);
+      // Short choices (Yes/No) sit side by side; longer lists stack neatly on phones.
+      const stacked = !isRadio || field.options!.length > 3 || field.options!.some((o) => o.length > 14);
       return (
         <fieldset className={wrapper} aria-describedby={describedBy}>
           <legend className="contents">{label}</legend>
-          <div className={`flex flex-wrap gap-2 ${isRadio ? '' : 'sm:grid sm:grid-cols-2'}`}>
+          <div className={`flex flex-wrap gap-2 ${isRadio ? '' : 'sm:grid sm:grid-cols-2'}`}
+          >
             {field.options!.map((opt) => {
               const checked = isRadio ? selected === opt : (selected as string[]).includes(opt);
               return (
                 <label
                   key={opt}
                   className={`inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg border text-sm cursor-pointer transition-colors ${
+                    stacked ? 'w-full sm:w-auto' : ''
+                  } ${
                     checked
                       ? 'bg-[#082E43] border-[#082E43] text-white'
                       : `bg-[#FFFDF7] text-slate-700 hover:border-[#082E43]/50 ${error ? 'border-red-400' : 'border-slate-300'}`

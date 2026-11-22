@@ -48,7 +48,7 @@ export function Dialog({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 overflow-y-auto bg-[#082E43]/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#082E43]/60 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -63,7 +63,7 @@ export function Dialog({
               role="dialog"
               aria-modal="true"
               aria-labelledby={titleId}
-              className={`relative w-full ${maxWidth} bg-[#FFFDF7] sm:rounded-2xl shadow-2xl`}
+              className={`relative w-full min-w-0 overflow-x-clip ${maxWidth} bg-[#FFFDF7] sm:rounded-2xl shadow-2xl`}
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 24 }}

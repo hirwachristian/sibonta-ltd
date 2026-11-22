@@ -171,7 +171,7 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
       {open && (
         <motion.div
           ref={scrollRef}
-          className="fixed inset-0 z-50 overflow-y-auto bg-[#082E43]/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden overscroll-contain bg-[#082E43]/60 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -183,7 +183,7 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
               role="dialog"
               aria-modal="true"
               aria-labelledby="loan-app-title"
-              className="relative w-full max-w-4xl bg-[#FFFDF7] sm:rounded-2xl shadow-2xl"
+              className="relative w-full min-w-0 overflow-x-clip max-w-4xl bg-[#FFFDF7] sm:rounded-2xl shadow-2xl"
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 24 }}
@@ -192,12 +192,12 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
               {/* Header */}
               <header className="sticky top-0 z-10 bg-[#FFFDF7]/95 backdrop-blur-sm border-b border-slate-200 sm:rounded-t-2xl">
                 <div className="flex items-center gap-4 px-5 sm:px-8 py-4">
-                  <img src={logo} alt="" className="w-11 h-11 shrink-0" />
+                  <img src={logo} alt="" className="w-9 h-9 sm:w-11 sm:h-11 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p id="loan-app-title" className="font-display text-lg sm:text-xl font-semibold text-[#082E43] leading-tight">
+                    <p id="loan-app-title" className="font-display text-base sm:text-xl font-semibold text-[#082E43] leading-tight">
                       Loan Application Form
                     </p>
-                    <p className="text-xs text-slate-500">SIBONTA Finance Ltd · Finance Today • Better Tomorrow</p>
+                    <p className="hidden sm:block text-xs text-slate-500">SIBONTA Finance Ltd · Finance Today • Better Tomorrow</p>
                   </div>
                   <button
                     type="button"
@@ -244,9 +244,9 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
                   <AnimatePresence mode="wait" initial={false}>
                     <motion.div
                       key={step.id}
-                      initial={{ opacity: 0, x: 16 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -16 }}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.2 }}
                       className="px-5 sm:px-8 py-8"
                     >
