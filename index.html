@@ -15,6 +15,17 @@
     />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- Start downloading the logo and welcome photo immediately, in parallel with the page code. -->
+    <link rel="preload" as="image" href="/images/logo-128.webp" type="image/webp" fetchpriority="high" />
+    <link
+      rel="preload"
+      as="image"
+      href="/images/hero-1376.webp"
+      imagesrcset="/images/hero-768.webp 768w, /images/hero-1376.webp 1376w"
+      imagesizes="100vw"
+      type="image/webp"
+      fetchpriority="high"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

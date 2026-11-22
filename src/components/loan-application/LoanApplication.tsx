@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, X } from 'lucide-react';
-import logo from '../../assets/images/sibontaltd-logo-noring.png';
+import { LOGO_SRC as logo } from '../../config/images';
 import { FieldInput } from './FieldInput';
 import {
   INITIAL_DATA,

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
 import { TARGET_CUSTOMER_SEGMENTS } from '../data/sibontaData';
 import { motion } from 'motion/react';
 import { ResilientImage } from './ResilientImage';
+import { SEGMENT_IMAGE_SIZES } from '../config/images';
 import { cardHover, EASE_OUT, fadeUp, Reveal, RevealGroup } from './motion/Reveal';
 
 const panelFade = {
@@ -19,6 +20,27 @@ export function TargetCustomersSection({
   onSelectSegmentForInquiry,
 }: TargetCustomersSectionProps) {
   const [activeSegmentId, setActiveSegmentId] = useState<string>(TARGET_CUSTOMER_SEGMENTS[0].id);
+
+  // Once the page has loaded, quietly fetch the other segments' photos so switching tabs is instant.
+  useEffect(() => {
+    const preload = () =>
+      TARGET_CUSTOMER_SEGMENTS.forEach((seg) => {
+        const img = new Image();
+        img.decoding = 'async';
+        if (seg.imageSrcSet) {
+          img.sizes = SEGMENT_IMAGE_SIZES;
+          img.srcset = seg.imageSrcSet;
+        }
+        img.src = seg.imageUrl;
+      });
+    const idle = () => {
+      if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(preload);
+      else setTimeout(preload, 1500);
+    };
+    if (document.readyState === 'complete') idle();
+    else window.addEventListener('load', idle, { once: true });
+    return () => window.removeEventListener('load', idle);
+  }, []);
 
   const activeSegment =
     TARGET_CUSTOMER_SEGMENTS.find((seg) => seg.id === activeSegmentId) ||
@@ -88,6 +110,10 @@ export function TargetCustomersSection({
             <motion.div key={activeSegment.id} {...panelFade} className="h-full lg:absolute lg:inset-0">
               <ResilientImage
                 src={activeSegment.imageUrl}
+                srcSet={activeSegment.imageSrcSet}
+                sizes={SEGMENT_IMAGE_SIZES}
+                width={1200}
+                height={896}
                 alt={activeSegment.imageAlt}
                 fallbackTitle={activeSegment.title}
                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"

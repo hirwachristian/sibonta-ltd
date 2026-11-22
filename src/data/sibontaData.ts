@@ -1,3 +1,5 @@
+import { SEGMENT_IMAGES } from '../config/images';
+
 export type ServiceCategory = 'credit' | 'advisory';
 
 export interface FinancialServiceItem {
@@ -35,6 +37,8 @@ export interface TargetCustomerSegment {
   focusSummary: string;
   narrative: string;
   imageUrl: string;
+  /** Responsive versions of imageUrl (small + large). */
+  imageSrcSet?: string;
   imageAlt: string;
   recommendedSolutions: string[];
   primaryNeed: string;
@@ -279,7 +283,8 @@ export const TARGET_CUSTOMER_SEGMENTS: TargetCustomerSegment[] = [
     focusSummary: 'Working capital · Business recovery · Financial management',
     narrative:
       'Small and medium-sized enterprises drive local employment and supply chains. We combine working capital and recovery credit with reliable bookkeeping, payroll management, financial statements, and audit support so owners can scale on solid numbers.',
-    imageUrl: '/src/assets/images/sme_growth_enterprise_1795263093931.jpg',
+    imageUrl: SEGMENT_IMAGES.sme.src,
+    imageSrcSet: SEGMENT_IMAGES.sme.srcSet,
     imageAlt: 'SME business owner reviewing stock inventory on a tablet in a well-organized workshop and retail store',
     recommendedSolutions: [
       'SME Working Capital Loans',
@@ -297,7 +302,8 @@ export const TARGET_CUSTOMER_SEGMENTS: TargetCustomerSegment[] = [
     focusSummary: 'Business loans · Bookkeeping · Business advisory',
     narrative:
       'Independent traders, artisans, and service founders need capital that fits real cash cycles alongside clear financial records. We help individual entrepreneurs acquire equipment, grow stock, and build profitable operations.',
-    imageUrl: '/src/assets/images/hero_sibonta_finance_1795263092437.jpg',
+    imageUrl: SEGMENT_IMAGES.entrepreneurs.src,
+    imageSrcSet: SEGMENT_IMAGES.entrepreneurs.srcSet,
     imageAlt: 'Individual business owner consulting with a financial advisor over growth projections at an oak table',
     recommendedSolutions: [
       'Individual Entrepreneur Loans',
@@ -315,7 +321,8 @@ export const TARGET_CUSTOMER_SEGMENTS: TargetCustomerSegment[] = [
     focusSummary: 'Financial access · Enterprise development · Economic empowerment',
     narrative:
       'Closing the financial access gap unlocks resilient enterprises and stronger communities. SIBONTA Finance Ltd provides accessible credit, tailored business planning, and supportive advisory to help women founders establish and expand sustainable businesses.',
-    imageUrl: '/src/assets/images/women_entrepreneur_leadership_1795263130069.jpg',
+    imageUrl: SEGMENT_IMAGES.women.src,
+    imageSrcSet: SEGMENT_IMAGES.women.srcSet,
     imageAlt: 'Woman entrepreneur managing financial reports and enterprise operations from a sunlit studio desk',
     recommendedSolutions: [
       'Individual Entrepreneur Loans',
@@ -333,7 +340,8 @@ export const TARGET_CUSTOMER_SEGMENTS: TargetCustomerSegment[] = [
     focusSummary: 'Entrepreneurship financing · Business development · Financial literacy',
     narrative:
       'Young founders and emerging professionals deserve structured guidance from day one. We pair accessible startup and growth financing with financial literacy, budgeting, and responsible debt management so young people build durable ventures.',
-    imageUrl: '/src/assets/images/youth_startup_studio_1795263092883.jpg',
+    imageUrl: SEGMENT_IMAGES.youth.src,
+    imageSrcSet: SEGMENT_IMAGES.youth.srcSet,
     imageAlt: 'Young entrepreneurs collaborating over business budgets and product prototypes in a modern studio',
     recommendedSolutions: [
       'Individual Entrepreneur Loans',

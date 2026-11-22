@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X } from 'lucide-react';
-import logo from '../../assets/images/sibontaltd-logo-noring.png';
+import { LOGO_SRC as logo } from '../../config/images';
 
 interface DialogProps {
   open: boolean;
@@ -71,7 +71,7 @@ export function Dialog({
             >
               <header className="sticky top-0 z-10 bg-[#FFFDF7]/95 backdrop-blur-sm border-b border-slate-200 sm:rounded-t-2xl">
                 <div className="flex items-center gap-4 px-5 sm:px-8 py-4">
-                  {showLogo && <img src={logo} alt="" className="w-11 h-11 shrink-0" />}
+                  {showLogo && <img src={logo} width={48} height={48} loading="lazy" decoding="async" alt="" className="w-11 h-11 shrink-0" />}
                   <div className="flex-1 min-w-0">
                     <p
                       id={titleId}

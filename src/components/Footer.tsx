@@ -1,5 +1,5 @@
 import { ArrowRight, Mail, MapPin, Phone } from 'lucide-react';
-import logo from '../assets/images/sibontaltd-logo-noring.png';
+import { LOGO_SRC as logo } from '../config/images';
 import { COMPANY_CONTACT } from '../data/sibontaData';
 import { SHOW_LOAN_PLANNER } from '../config/features';
 
@@ -66,7 +66,7 @@ export function Footer({ onOpenFaq, onApplyForLoan }: FooterProps) {
               className="inline-flex items-center gap-4 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#EAB308]"
             >
               <span className="flex items-center justify-center w-14 h-14 rounded-full bg-[#FFFDF7] shrink-0">
-                <img src={logo} alt="" className="w-12 h-12" />
+                <img src={logo} width={48} height={48} loading="lazy" decoding="async" alt="" className="w-12 h-12" />
               </span>
               <span>
                 <span className="block font-display text-xl font-semibold text-[#FFFDF7] leading-tight">

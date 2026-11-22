@@ -14,7 +14,7 @@ import { SHOW_LOAN_PLANNER } from './config/features';
 import { AboutSection } from './components/AboutSection';
 import { LoanApplication } from './components/loan-application/LoanApplication';
 import { scrollToId, useSmoothAnchorScroll } from './lib/smoothScroll';
-import heroImage from './assets/images/hero_sibonta_finance_1795263092437.jpg';
+import { HERO_IMAGE } from './config/images';
 
 export default function App() {
   const [preselectedService, setPreselectedService] = useState<string>('SME Working Capital Loans');
@@ -76,7 +76,13 @@ export default function App() {
             transition={{ duration: 6, ease: EASE_OUT }}
           >
             <ResilientImage
-              src={heroImage}
+              src={HERO_IMAGE.src}
+              srcSet={HERO_IMAGE.srcSet}
+              sizes={HERO_IMAGE.sizes}
+              loading="eager"
+              fetchPriority="high"
+              width={1376}
+              height={768}
               alt="Small business owner and financial advisor reviewing business performance charts together at a sunlit oak table"
               fallbackTitle="SIBONTA Finance Ltd"
               className="w-full h-full object-cover object-[70%_center]"
@@ -101,7 +107,7 @@ export default function App() {
               </motion.h1>
 
               <motion.p variants={fadeUp} className="mt-6 text-base sm:text-xl text-slate-700 leading-relaxed max-w-xl">
-                Responsible loans, financial advisory, accounting, and debt counselling for SMEs,
+                Responsible loans, debt counselling, financial advisory, and accounting for SMEs,
                 entrepreneurs, women, and young people in Rwanda.
               </motion.p>
 

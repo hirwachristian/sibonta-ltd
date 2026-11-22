@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import logo from '../assets/images/sibontaltd-logo-noring.png';
+import { LOGO_SRC as logo } from '../config/images';
 import { SHOW_LOAN_PLANNER } from '../config/features';
 
 /** Which nav section is currently on screen, so its link can stay highlighted. */
@@ -85,6 +85,8 @@ export function Navbar({ onApplyForLoan, onOpenFaq }: NavbarProps) {
         >
           <img
             src={logo}
+            fetchPriority="high"
+            decoding="async"
             alt="SIBONTA Finance Ltd"
             width={56}
             height={56}

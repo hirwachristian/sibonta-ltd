@@ -6,6 +6,13 @@ interface ResilientImageProps {
   alt: string;
   className?: string;
   fallbackTitle?: string;
+  srcSet?: string;
+  sizes?: string;
+  /** "eager" + fetchPriority "high" for the first image on screen; "lazy" for everything below. */
+  loading?: 'eager' | 'lazy';
+  fetchPriority?: 'high' | 'low' | 'auto';
+  width?: number;
+  height?: number;
 }
 
 export function ResilientImage({
@@ -13,6 +20,12 @@ export function ResilientImage({
   alt,
   className = '',
   fallbackTitle = 'SIBONTA Finance Ltd',
+  srcSet,
+  sizes,
+  loading = 'lazy',
+  fetchPriority = 'auto',
+  width,
+  height,
 }: ResilientImageProps) {
   const [hasError, setHasError] = useState(false);
 
@@ -33,7 +46,14 @@ export function ResilientImage({
   return (
     <img
       src={src}
+      srcSet={srcSet}
+      sizes={sizes}
       alt={alt}
+      width={width}
+      height={height}
+      loading={loading}
+      fetchPriority={fetchPriority}
+      decoding={loading === 'eager' ? 'sync' : 'async'}
       referrerPolicy="no-referrer"
       onError={() => setHasError(true)}
       className={className}

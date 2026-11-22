@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import aboutImage from '../assets/images/aboutus-web.jpg';
+import { ABOUT_IMAGE } from '../config/images';
 import { fadeUp, Reveal, RevealGroup } from './motion/Reveal';
 import { CountUp } from './motion/CountUp';
 import { COMPANY_STATS } from '../data/sibontaData';
@@ -59,7 +59,10 @@ export function AboutSection() {
             <figure className="group relative isolate flex flex-col justify-end min-h-[420px] lg:min-h-[480px] overflow-hidden rounded-2xl bg-[#082E43] text-[#FFFDF7] p-8 sm:p-10">
               {/* Background photo with an ink overlay so the text stays readable */}
               <img
-                src={aboutImage}
+                src={ABOUT_IMAGE.src}
+                srcSet={ABOUT_IMAGE.srcSet}
+                sizes={ABOUT_IMAGE.sizes}
+                decoding="async"
                 alt=""
                 loading="lazy"
                 className="absolute inset-0 -z-20 w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
