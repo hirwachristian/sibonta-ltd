@@ -403,6 +403,14 @@ export function validateStep(step: Step, d: ApplicationData): Record<string, str
   return errors;
 }
 
+/** "2026-12-05" -> "5 Dec 2026" (leaves anything else unchanged). */
+export const formatDate = (iso: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return iso;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+};
+
 export const formatRwf = (digits: string) =>
   digits ? `RWF ${Number(digits).toLocaleString('en-US')}` : '';
 
@@ -419,7 +427,7 @@ export function toSubmission(d: ApplicationData): Record<string, string> {
           .map((row, i) =>
             `#${i + 1}: ` +
             (f.columns ?? [])
-              .map((c) => `${c.label}: ${(c.money ? formatRwf(row[c.name] ?? '') : row[c.name]) || 'Not provided'}`)
+              .map((c) => `${c.label}: ${(c.money ? formatRwf(row[c.name] ?? '') : c.date ? formatDate(row[c.name] ?? '') : row[c.name]) || 'Not provided'}`)
               .join('; '),
           )
           .join('\n');
@@ -429,6 +437,8 @@ export function toSubmission(d: ApplicationData): Record<string, string> {
         out[key] = 'Agreed to declarations 1 to 5';
       } else if (f.type === 'money') {
         out[key] = formatRwf(v as string);
+      } else if (f.type === 'date') {
+        out[key] = formatDate(v as string);
       } else {
         out[key] = String(v);
       }

@@ -61,6 +61,8 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
   const [submitError, setSubmitError] = useState('');
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  /** Hidden spam-bot trap; real applicants never see or fill it. */
+  const honeypotRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const steps = useMemo(() => visibleSteps(data), [data]);
@@ -140,6 +142,7 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
         toSubmission(data),
         (data.fullName as string) || 'Applicant',
         (data.email as string) || undefined,
+        honeypotRef.current?.value ?? '',
       );
       setReference(ref);
       setStatus('success');
@@ -241,6 +244,15 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
                     handleNext();
                   }}
                 >
+                  <input
+                    ref={honeypotRef}
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="absolute -left-[9999px] w-px h-px opacity-0"
+                  />
                   <AnimatePresence mode="wait" initial={false}>
                     <motion.div
                       key={step.id}

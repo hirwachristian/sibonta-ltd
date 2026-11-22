@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import { CheckCircle2, AlertCircle, Mail, MapPin, Phone } from 'lucide-react';
 import { COMPANY_CONTACT, FINANCIAL_SERVICES } from '../data/sibontaData';
@@ -87,6 +87,10 @@ export function ConsultationForm({
   const [notes, setNotes] = useState(preselectedNotes || '');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
+  /** Hidden spam-bot trap; real visitors never see or fill it. */
+  const honeypotRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (preselectedService) setSelectedService(preselectedService);
@@ -118,7 +122,7 @@ export function ConsultationForm({
     return nextErrors;
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -126,8 +130,34 @@ export function ConsultationForm({
       return;
     }
     setErrors({});
-    const referenceCode = `SIB-${Math.floor(100000 + Math.random() * 900000)}`;
-    setSubmittedRef(referenceCode);
+    setSendError('');
+    setSending(true);
+    const referenceCode = `SIB-${Date.now().toString().slice(-6)}`;
+    try {
+      const res = await fetch('/api/enquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          reference: referenceCode,
+          fullName,
+          email,
+          phone,
+          customerGroup,
+          service: selectedService,
+          notes,
+          website: honeypotRef.current?.value ?? '',
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !body.ok) throw new Error(body.error || `Request failed (${res.status})`);
+      setSubmittedRef(referenceCode);
+    } catch {
+      setSendError(
+        `We couldn't send your enquiry. Please check your connection and try again, or call ${COMPANY_CONTACT.phone}.`,
+      );
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleReset = () => {
@@ -271,7 +301,16 @@ export function ConsultationForm({
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} noValidate className="space-y-5">
+              <form onSubmit={handleSubmit} noValidate className="relative space-y-5">
+                <input
+                  ref={honeypotRef}
+                  type="text"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="absolute -left-[9999px] w-px h-px opacity-0"
+                />
                 <div>
                   <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
                     Request a Financial Consultation
@@ -425,12 +464,20 @@ export function ConsultationForm({
                   />
                 </div>
 
+                {sendError && (
+                  <p role="alert" className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                    <span>{sendError}</span>
+                  </p>
+                )}
+
                 <div className="pt-2 flex sm:justify-end">
                   <button
                     type="submit"
-                    className="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-white bg-[#082E43] hover:bg-[#05202F] rounded-lg transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C27803]"
+                    disabled={sending}
+                    className="w-full sm:w-auto disabled:opacity-70 disabled:cursor-wait px-6 py-3 text-sm font-semibold text-white bg-[#082E43] hover:bg-[#05202F] rounded-lg transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C27803]"
                   >
-                    Submit Inquiry
+                    {sending ? 'Sending…' : 'Submit Inquiry'}
                   </button>
                 </div>
               </form>
