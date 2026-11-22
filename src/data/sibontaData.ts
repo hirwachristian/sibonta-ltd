@@ -503,5 +503,5 @@ export interface CompanyStat {
 export const COMPANY_STATS: CompanyStat[] = [
   { value: 1200, suffix: '+', label: 'Clients served' },
   { value: 24, suffix: '/7', label: 'Support' },
-  { value: 5, suffix: '+', label: 'Years of experience' },
+  { value: 2, suffix: '+', label: 'Years of experience' },
 ];
