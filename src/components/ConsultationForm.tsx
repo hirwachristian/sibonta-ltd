@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import { CheckCircle2, AlertCircle, Mail, MapPin, Phone } from 'lucide-react';
 import { COMPANY_CONTACT, FINANCIAL_SERVICES } from '../data/sibontaData';
+import { validatePhone } from '../lib/validators';
 
 function WhatsAppIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -107,9 +108,9 @@ export function ConsultationForm({
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       nextErrors.email = 'Please enter a valid email address.';
     }
-    const digitsOnly = phone.replace(/[^\d]/g, '');
-    if (digitsOnly.length < 7) {
-      nextErrors.phone = 'Please provide a reachable phone number (at least 7 digits).';
+    const phoneError = phone.trim() ? validatePhone(phone) : 'Please enter your phone number.';
+    if (phoneError) {
+      nextErrors.phone = phoneError;
     }
     if (!selectedService) {
       nextErrors.selectedService = 'Please select a product or service.';
@@ -362,7 +363,10 @@ export function ConsultationForm({
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+250 700 000 000"
+                      placeholder="078 123 4567"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      maxLength={20}
                       className="w-full min-w-0 px-3.5 py-2.5 text-base sm:text-sm bg-[#FFFDF7] border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#082E43] focus:ring-1 focus:ring-[#082E43]"
                     />
                     {errors.phone && (

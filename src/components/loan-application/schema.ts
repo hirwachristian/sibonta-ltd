@@ -6,6 +6,23 @@
  * submitted email is built from the same labels, so the two never drift apart.
  */
 
+import {
+  ID_HINT,
+  PHONE_HINT,
+  normaliseId,
+  validateDateOfBirth,
+  validateIdOrPassport,
+  validatePhone,
+} from '../../lib/validators';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const normaliseName = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase();
+/** True when two phone numbers are the same line, however they were typed. */
+const sameNumber = (a: string, b?: string) => {
+  const last9 = (s: string) => s.replace(/\D/g, '').slice(-9);
+  return !!b && last9(a).length === 9 && last9(a) === last9(b);
+};
+
 export type Row = Record<string, string>;
 export type Value = string | string[] | boolean | Row[];
 export type ApplicationData = Record<string, Value>;
@@ -41,6 +58,10 @@ export interface Field {
   /** Spans both columns on wide screens. */
   full?: boolean;
   showIf?: (d: ApplicationData) => boolean;
+  /** Extra real-world check; return an error message, or undefined when valid. */
+  validate?: (value: string, d: ApplicationData) => string | undefined;
+  /** Convert typing to capital letters (passport numbers). */
+  uppercase?: boolean;
 }
 
 export interface Step {
@@ -103,15 +124,40 @@ export const STEPS: Step[] = [
     description: 'Please enter your details exactly as they appear on your ID.',
     fields: [
       { name: 'fullName', label: 'Full name (as on ID)', type: 'text', required: true },
-      { name: 'nationalId', label: 'National ID / Passport number', type: 'text', required: true },
-      { name: 'dob', label: 'Date of birth', type: 'date', required: true },
+      {
+        name: 'nationalId',
+        label: 'National ID / Passport number',
+        type: 'text',
+        required: true,
+        uppercase: true,
+        placeholder: 'e.g. 1 1990 8 0012345 0 67',
+        hint: ID_HINT,
+        validate: (v, d) => validateIdOrPassport(v, { dob: d.dob as string, gender: d.gender as string }),
+      },
+      { name: 'dob', label: 'Date of birth', type: 'date', required: true, validate: (v) => validateDateOfBirth(v) },
       { name: 'gender', label: 'Gender', type: 'radio', options: ['Female', 'Male', 'Prefer not to say'], required: true },
       { name: 'nationality', label: 'Nationality', type: 'text', required: true, placeholder: 'e.g. Rwandan' },
       { name: 'maritalStatus', label: 'Marital status', type: 'select', options: ['Single', 'Married', 'Divorced', 'Widowed', 'Other'], required: true },
       { name: 'spouseName', label: 'Spouse’s full name', type: 'text', showIf: (d) => d.maritalStatus === 'Married' },
       { name: 'dependants', label: 'Number of dependants', type: 'number' },
-      { name: 'mobile', label: 'Mobile telephone', type: 'tel', required: true, placeholder: '+250 7XX XXX XXX' },
-      { name: 'altPhone', label: 'Alternative telephone', type: 'tel' },
+      {
+        name: 'mobile',
+        label: 'Mobile telephone',
+        type: 'tel',
+        required: true,
+        placeholder: '078 123 4567',
+        hint: PHONE_HINT,
+        validate: (v) => validatePhone(v),
+      },
+      {
+        name: 'altPhone',
+        label: 'Alternative telephone',
+        type: 'tel',
+        placeholder: '073 123 4567',
+        validate: (v, d) =>
+          validatePhone(v, { allowLandline: true }) ??
+          (sameNumber(v, d.mobile as string) ? 'Please give a different number from your mobile.' : undefined),
+      },
       { name: 'email', label: 'Email address', type: 'email' },
       { name: 'residentialAddress', label: 'Residential address (Village/Umudugudu, Cell, Sector)', type: 'text', required: true, full: true },
       { name: 'district', label: 'District / Province / City', type: 'text', required: true },
@@ -201,9 +247,36 @@ export const STEPS: Step[] = [
     fields: [
       { name: 'hasGuarantor', label: 'Are you proposing a guarantor?', type: 'radio', options: ['No', 'Yes'], required: true, full: true },
       { name: 'gFullName', label: 'Guarantor full name', type: 'text', required: true, showIf: (d) => d.hasGuarantor === 'Yes' },
-      { name: 'gNationalId', label: 'Guarantor National ID / Passport number', type: 'text', required: true, showIf: (d) => d.hasGuarantor === 'Yes' },
+      {
+        name: 'gNationalId',
+        label: 'Guarantor National ID / Passport number',
+        type: 'text',
+        required: true,
+        uppercase: true,
+        hint: ID_HINT,
+        showIf: (d) => d.hasGuarantor === 'Yes',
+        validate: (v, d) =>
+          validateIdOrPassport(v) ??
+          (normaliseId(v) === normaliseId((d.nationalId as string) ?? '')
+            ? 'The guarantor must be a different person from the applicant.'
+            : undefined),
+      },
       { name: 'gRelationship', label: 'Relationship to applicant', type: 'text', showIf: (d) => d.hasGuarantor === 'Yes' },
-      { name: 'gContact', label: 'Guarantor mobile telephone / email', type: 'text', required: true, showIf: (d) => d.hasGuarantor === 'Yes' },
+      {
+        name: 'gContact',
+        label: 'Guarantor mobile telephone / email',
+        type: 'text',
+        required: true,
+        placeholder: '078 123 4567 or name@example.com',
+        showIf: (d) => d.hasGuarantor === 'Yes',
+        validate: (v, d) => {
+          if (v.includes('@')) return EMAIL_RE.test(v.trim()) ? undefined : 'Please enter a valid email address.';
+          return (
+            validatePhone(v, { allowLandline: true }) ??
+            (sameNumber(v, d.mobile as string) ? 'Please give the guarantor’s own number, not yours.' : undefined)
+          );
+        },
+      },
       { name: 'gOccupation', label: 'Employer / business and occupation', type: 'text', showIf: (d) => d.hasGuarantor === 'Yes' },
       { name: 'gIncome', label: 'Guarantor monthly net income (RWF)', type: 'money', showIf: (d) => d.hasGuarantor === 'Yes' },
       { name: 'gAddress', label: 'Guarantor residential address', type: 'text', showIf: (d) => d.hasGuarantor === 'Yes' },
@@ -261,8 +334,29 @@ export const STEPS: Step[] = [
       },
       { name: 'documentsOther', label: 'Other supporting documents', type: 'text', full: true },
       { name: 'consent', label: 'I have read and agree to all the declarations above', type: 'consent', required: true, full: true },
-      { name: 'signatureName', label: 'Applicant full name (electronic signature)', type: 'text', required: true },
-      { name: 'signatureId', label: 'National ID / Passport number', type: 'text', required: true },
+      {
+        name: 'signatureName',
+        label: 'Applicant full name (electronic signature)',
+        type: 'text',
+        required: true,
+        hint: 'Type your full name exactly as entered in Section 2.',
+        validate: (v, d) =>
+          normaliseName(v) === normaliseName((d.fullName as string) ?? '')
+            ? undefined
+            : 'This must match the full name you entered in Section 2.',
+      },
+      {
+        name: 'signatureId',
+        label: 'National ID / Passport number',
+        type: 'text',
+        required: true,
+        uppercase: true,
+        validate: (v, d) =>
+          validateIdOrPassport(v) ??
+          (normaliseId(v) === normaliseId((d.nationalId as string) ?? '')
+            ? undefined
+            : 'This must match the ID / passport number you entered in Section 2.'),
+      },
     ],
   },
 ];
@@ -291,11 +385,16 @@ export function validateStep(step: Step, d: ApplicationData): Record<string, str
       continue;
     }
     if (isEmpty(v)) continue;
-    if (f.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v as string)) {
+    if (f.type === 'email' && !EMAIL_RE.test((v as string).trim())) {
       errors[f.name] = 'Please enter a valid email address.';
     }
-    if (f.type === 'tel' && (v as string).replace(/\D/g, '').length < 9) {
-      errors[f.name] = 'Please enter a reachable phone number.';
+    if (f.type === 'tel' && !f.validate) {
+      const phoneError = validatePhone(v as string, { allowLandline: true });
+      if (phoneError) errors[f.name] = phoneError;
+    }
+    if (f.validate && typeof v === 'string') {
+      const customError = f.validate(v, d);
+      if (customError) errors[f.name] = customError;
     }
     if ((f.type === 'number' || f.type === 'money') && f.name === 'termMonths' && Number(v) < 1) {
       errors[f.name] = 'Please enter at least 1 month.';

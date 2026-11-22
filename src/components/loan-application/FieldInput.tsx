@@ -204,8 +204,18 @@ export function FieldInput({ field, data, error, onChange }: Props) {
             value={(value as string) ?? ''}
             placeholder={field.placeholder}
             onChange={(e) =>
-              onChange(field.name, field.type === 'number' ? digitsOnly(e.target.value).slice(0, 4) : e.target.value)
+              onChange(
+                field.name,
+                field.type === 'number'
+                  ? digitsOnly(e.target.value).slice(0, 4)
+                  : field.uppercase
+                    ? e.target.value.toUpperCase()
+                    : e.target.value,
+              )
             }
+            maxLength={field.type === 'tel' ? 20 : field.uppercase ? 24 : undefined}
+            autoCapitalize={field.uppercase ? 'characters' : undefined}
+            spellCheck={field.uppercase || field.type === 'tel' ? false : undefined}
             aria-invalid={!!error}
             aria-describedby={describedBy}
             className={inputClass(!!error)}
@@ -222,6 +232,7 @@ function autoComplete(name: string) {
       fullName: 'name',
       signatureName: 'name',
       mobile: 'tel',
+      altPhone: 'tel',
       email: 'email',
       dob: 'bday',
       nationality: 'country-name',
