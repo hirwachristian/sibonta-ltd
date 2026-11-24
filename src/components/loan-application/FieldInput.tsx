@@ -137,7 +137,13 @@ export function FieldInput({ field, data, error, onChange }: Props) {
         <TableInput field={field} rows={(value as Row[]) ?? []} onChange={onChange} footer={footer} label={label} />
       );
 
-    case 'select':
+    case 'select': {
+      const options = field.optionsFrom ? field.optionsFrom(data) : field.options!;
+      // The list could not be downloaded: let the applicant type the name instead.
+      if (options === null) {
+        return <FieldInput field={{ ...field, type: 'text', optionsFrom: undefined }} data={data} error={error} onChange={onChange} />;
+      }
+      const empty = options.length === 0;
       return (
         <label className={`block ${wrapper}`}>
           {label}
@@ -145,18 +151,20 @@ export function FieldInput({ field, data, error, onChange }: Props) {
             id={id}
             value={(value as string) ?? ''}
             onChange={(e) => onChange(field.name, e.target.value)}
+            disabled={empty}
             aria-invalid={!!error}
             aria-describedby={describedBy}
-            className={inputClass(!!error)}
+            className={`${inputClass(!!error)} disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed`}
           >
-            <option value="">Select…</option>
-            {field.options!.map((o) => (
+            <option value="">{empty && field.emptyText ? field.emptyText(data) : 'Select…'}</option>
+            {options.map((o) => (
               <option key={o}>{o}</option>
             ))}
           </select>
           {footer}
         </label>
       );
+    }
 
     case 'textarea':
       return (

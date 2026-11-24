@@ -4,6 +4,7 @@ import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Clock, FileText, Load
 import { LOGO_SRC as logo } from '../../config/images';
 import { FieldInput } from './FieldInput';
 import {
+  FIELD_RESETS,
   INITIAL_DATA,
   QUICK_LOAN_LIMIT,
   formTypeFor,
@@ -18,6 +19,7 @@ import {
   type Value,
 } from './schema';
 import { COMPANY_EMAIL, COMPANY_PHONE, submitLoanApplication } from './submit';
+import { loadRwandaLocations } from '../../lib/rwandaLocations';
 
 /** Progress is kept only for this browser tab (cleared when the tab closes or on submit). */
 const DRAFT_KEY = 'sibonta-loan-application-draft';
@@ -98,6 +100,12 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
   const amountDigits = (data.amount as string) ?? '';
   const suggestedForm: FormType | undefined = Number(amountDigits) > 0 ? formTypeFor(amountDigits) : undefined;
 
+  // The quick form's address dropdowns need Rwanda's location list; fetch it when that form opens.
+  const [, setLocationsLoaded] = useState(0);
+  useEffect(() => {
+    if (open && formType === 'quick') loadRwandaLocations().then(() => setLocationsLoaded((n) => n + 1));
+  }, [open, formType]);
+
   const steps = useMemo(() => visibleSteps(data), [data]);
   const index = Math.min(stepIndex, steps.length - 1);
   const step = steps[index];
@@ -135,7 +143,12 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
   };
 
   const handleChange = useCallback((name: string, value: Value) => {
-    setData((d) => ({ ...d, [name]: value }));
+    setData((d) => {
+      const next = { ...d, [name]: value };
+      // e.g. choosing another district clears the sector, cell and village below it
+      if (d[name] !== value) for (const dependant of FIELD_RESETS[name] ?? []) next[dependant] = '';
+      return next;
+    });
     setErrors((e) => {
       if (!e[name]) return e;
       const { [name]: _removed, ...rest } = e;

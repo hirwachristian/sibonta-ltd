@@ -14,6 +14,7 @@ import {
   validateIdOrPassport,
   validatePhone,
 } from '../../lib/validators';
+import { locationOptions, locationsLoading, type LocationLevel } from '../../lib/rwandaLocations';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const normaliseName = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase();
@@ -64,6 +65,12 @@ export interface Field {
   uppercase?: boolean;
   /** Declaration text shown above a consent checkbox (defaults to DECLARATIONS). */
   declarations?: string[];
+  /** Dropdown options that depend on other answers; null means "list unavailable, let them type". */
+  optionsFrom?: (d: ApplicationData) => string[] | null;
+  /** Text shown in a dropdown that has no options yet (e.g. "Choose a district first"). */
+  emptyText?: (d: ApplicationData) => string;
+  /** Answers to clear when this one changes (e.g. a new district clears the sector). */
+  resets?: string[];
 }
 
 export interface Step {
@@ -397,9 +404,37 @@ export const RWANDA_DISTRICTS = [
   'Nyaruguru', 'Rubavu', 'Ruhango', 'Rulindo', 'Rusizi', 'Rutsiro', 'Rwamagana',
 ];
 
-/** A real place name: at least 2 letters, no digits-only or symbol-only answers. */
-const placeName = (what: string) => (v: string) =>
-  /\p{L}.*\p{L}/u.test(v.trim()) ? undefined : `Please enter the name of your ${what}.`;
+const chosenPlace = (d: ApplicationData) => ({
+  district: d.qDistrict as string,
+  sector: d.qSector as string,
+  cell: d.qCell as string,
+});
+
+/**
+ * A dropdown for one level of the address. Its options follow the level above it,
+ * and the answer must be one of them (or any real name if the list could not load).
+ */
+const placeField = (
+  name: string,
+  level: LocationLevel,
+  label: string,
+  parentLabel: string,
+  parentKey: string,
+  resets: string[],
+): Field => ({
+  name,
+  label,
+  type: 'select',
+  required: true,
+  resets,
+  optionsFrom: (d) => locationOptions(level, chosenPlace(d)),
+  emptyText: (d) => (d[parentKey] && locationsLoading() ? 'Loading…' : `Choose a ${parentLabel} first`),
+  validate: (v, d) => {
+    const options = locationOptions(level, chosenPlace(d));
+    if (options === null) return /\p{L}.*\p{L}/u.test(v.trim()) ? undefined : `Please enter the name of your ${level}.`;
+    return options.length && !options.includes(v) ? `Please choose your ${level} from the list.` : undefined;
+  },
+});
 
 export const QUICK_STEPS: Step[] = [
   {
@@ -429,10 +464,10 @@ export const QUICK_STEPS: Step[] = [
         hint: PHONE_HINT,
         validate: (v) => validatePhone(v),
       },
-      { name: 'district', label: 'District', type: 'select', options: RWANDA_DISTRICTS, required: true },
-      { name: 'sector', label: 'Sector', type: 'text', required: true, placeholder: 'e.g. Gatenga', validate: placeName('sector') },
-      { name: 'cell', label: 'Cell', type: 'text', required: true, placeholder: 'e.g. Karambo', validate: placeName('cell') },
-      { name: 'village', label: 'Village (Umudugudu)', type: 'text', required: true, placeholder: 'e.g. Amahoro', validate: placeName('village') },
+      { name: 'qDistrict', label: 'District', type: 'select', options: RWANDA_DISTRICTS, required: true, resets: ['qSector', 'qCell', 'qVillage'] },
+      placeField('qSector', 'sector', 'Sector', 'district', 'qDistrict', ['qCell', 'qVillage']),
+      placeField('qCell', 'cell', 'Cell', 'sector', 'qSector', ['qVillage']),
+      placeField('qVillage', 'village', 'Village (Umudugudu)', 'cell', 'qCell', []),
       { name: 'qEmployment', label: 'Employment / business', type: 'radio', options: ['Salaried', 'Self-employed', 'Other'], required: true },
       { name: 'qEmploymentOther', label: 'Please specify', type: 'text', showIf: (d) => d.qEmployment === 'Other' },
       { name: 'employerName', label: 'Employer / business name', type: 'text', required: true },
@@ -533,6 +568,11 @@ export const QUICK_STEPS: Step[] = [
     ],
   },
 ];
+
+/** Which answers to clear when another answer changes (from each field's `resets`). */
+export const FIELD_RESETS: Record<string, string[]> = Object.fromEntries(
+  [...STEPS, ...QUICK_STEPS].flatMap((st) => st.fields.filter((f) => f.resets).map((f) => [f.name, f.resets!])),
+);
 
 export const INITIAL_DATA: ApplicationData = {
   existingLoans: [],
