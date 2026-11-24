@@ -16,11 +16,7 @@ export const COMPANY_INBOX = process.env.COMPANY_INBOX || 'sibontaf@gmail.com';
 export const SEND_CONFIRMATIONS = process.env.SEND_CONFIRMATIONS !== 'false';
 
 /** Public address of the website, used for the logo in emails. */
-const SITE_URL = (
-  process.env.SITE_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '') ||
-  'https://sibontatd.vercel.app'
-).replace(/\/$/, '');
+const SITE_URL = (process.env.SITE_URL || 'https://www.sibontafinance.com').replace(/\/$/, '');
 /** PNG works in every mail app (Gmail, Outlook, Apple Mail). Override with EMAIL_LOGO_URL if needed. */
 const LOGO_URL = process.env.EMAIL_LOGO_URL || `${SITE_URL}/images/email-logo.png`;
 
