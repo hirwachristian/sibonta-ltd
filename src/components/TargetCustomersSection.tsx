@@ -1,10 +1,25 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
 import { TARGET_CUSTOMER_SEGMENTS } from '../data/sibontaData';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { ResilientImage } from './ResilientImage';
 import { SEGMENT_IMAGE_SIZES } from '../config/images';
 import { cardHover, EASE_OUT, fadeUp, Reveal, RevealGroup } from './motion/Reveal';
+
+/** New photo fades in over the old one while settling from a slight zoom (no blank flash). */
+const photoSwap = {
+  initial: { opacity: 0, scale: 1.08 },
+  animate: { opacity: 1, scale: 1 },
+  exit: { opacity: 0 },
+  transition: { opacity: { duration: 0.7, ease: EASE_OUT }, scale: { duration: 1.2, ease: EASE_OUT } },
+} as const;
+
+/** Very slow "Ken Burns" drift while a photo is on screen. */
+const photoDrift = {
+  initial: { scale: 1 },
+  animate: { scale: 1.06 },
+  transition: { duration: 14, ease: 'linear', repeat: Infinity, repeatType: 'reverse' },
+} as const;
 
 const panelFade = {
   initial: { opacity: 0 },
@@ -104,21 +119,70 @@ export function TargetCustomersSection({
         </RevealGroup>
 
         {/* Active Segment Detail Split (2-column balanced stretch) */}
-        <Reveal className="group mt-8 bg-[#FFFDF7] border border-slate-200 rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch">
-          {/* Editorial Photo (fades when the segment changes, zooms gently on hover) */}
-          <div className="lg:col-span-6 relative min-h-[280px] sm:min-h-[340px] overflow-hidden">
-            <motion.div key={activeSegment.id} {...panelFade} className="h-full lg:absolute lg:inset-0">
-              <ResilientImage
-                src={activeSegment.imageUrl}
-                srcSet={activeSegment.imageSrcSet}
-                sizes={SEGMENT_IMAGE_SIZES}
-                width={1200}
-                height={896}
-                alt={activeSegment.imageAlt}
-                fallbackTitle={activeSegment.title}
-                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-              />
-            </motion.div>
+        <Reveal className="mt-8 bg-[#FFFDF7] border border-slate-200 rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch">
+          {/* Editorial Photo: wipes in on first view, crossfades between segments, drifts slowly */}
+          <div className="lg:col-span-6 relative h-[280px] sm:h-[360px] lg:h-auto lg:min-h-[460px] overflow-hidden bg-[#E3EEF4]">
+            <AnimatePresence initial={false}>
+              <motion.div key={activeSegment.id} {...photoSwap} className="absolute inset-0">
+                <motion.div {...photoDrift} className="w-full h-full">
+                  <ResilientImage
+                    src={activeSegment.imageUrl}
+                    srcSet={activeSegment.imageSrcSet}
+                    sizes={SEGMENT_IMAGE_SIZES}
+                    width={1200}
+                    height={896}
+                    alt={activeSegment.imageAlt}
+                    fallbackTitle={activeSegment.title}
+                    className="w-full h-full object-cover"
+                  />
+                </motion.div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Soft ink gradient so the caption stays readable */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[#082E43]/75 via-[#082E43]/25 to-transparent"
+            />
+
+            {/* Caption slides up with each segment */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={activeSegment.id}
+                aria-hidden="true"
+                className="absolute left-5 right-5 bottom-6 sm:left-7 sm:bottom-7 text-white"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.25, ease: EASE_OUT } }}
+                exit={{ opacity: 0, y: -6, transition: { duration: 0.2 } }}
+              >
+                <span className="font-mono text-xs font-semibold text-[#EAB308] tabular-nums">
+                  {activeSegment.number}.
+                </span>
+                <p className="mt-0.5 font-display text-xl sm:text-2xl font-semibold tracking-tight">
+                  {activeSegment.title}
+                </p>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Gold accent line sweeps across on each change */}
+            <motion.span
+              key={`line-${activeSegment.id}`}
+              aria-hidden="true"
+              className="absolute left-0 bottom-0 h-1 w-full bg-[#C27803] origin-left"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.9, delay: 0.15, ease: EASE_OUT }}
+            />
+
+            {/* Ice-blue curtain slides away the first time the photo scrolls into view */}
+            <motion.span
+              aria-hidden="true"
+              className="absolute inset-0 z-10 bg-[#C9DFEA] origin-right"
+              initial={{ scaleX: 1 }}
+              whileInView={{ scaleX: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 1.1, delay: 0.1, ease: EASE_OUT }}
+            />
           </div>
 
           {/* Segment Details & Solutions */}

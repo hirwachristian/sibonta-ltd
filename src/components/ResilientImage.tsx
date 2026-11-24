@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Building2 } from 'lucide-react';
 
 interface ResilientImageProps {
@@ -13,6 +13,7 @@ interface ResilientImageProps {
   fetchPriority?: 'high' | 'low' | 'auto';
   width?: number;
   height?: number;
+  style?: CSSProperties;
 }
 
 export function ResilientImage({
@@ -26,6 +27,7 @@ export function ResilientImage({
   fetchPriority = 'auto',
   width,
   height,
+  style,
 }: ResilientImageProps) {
   const [hasError, setHasError] = useState(false);
 
@@ -57,6 +59,7 @@ export function ResilientImage({
       referrerPolicy="no-referrer"
       onError={() => setHasError(true)}
       className={className}
+      style={style}
     />
   );
 }

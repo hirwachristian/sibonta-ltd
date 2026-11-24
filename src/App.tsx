@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { MotionConfig, motion } from 'motion/react';
-import { EASE_OUT, fadeUp } from './components/motion/Reveal';
+import { fadeUp } from './components/motion/Reveal';
 import { Navbar } from './components/Navbar';
-import { ResilientImage } from './components/ResilientImage';
+import { HeroSlideshow } from './components/HeroSlideshow';
 import { ServicesCatalog } from './components/ServicesCatalog';
 import { LoanAffordabilityEstimator } from './components/LoanAffordabilityEstimator';
 import { TargetCustomersSection } from './components/TargetCustomersSection';
@@ -14,7 +14,6 @@ import { SHOW_LOAN_PLANNER } from './config/features';
 import { AboutSection } from './components/AboutSection';
 import { LoanApplication } from './components/loan-application/LoanApplication';
 import { scrollToId, useSmoothAnchorScroll } from './lib/smoothScroll';
-import { HERO_IMAGE } from './config/images';
 
 export default function App() {
   const [preselectedService, setPreselectedService] = useState<string>('SME Working Capital Loans');
@@ -68,26 +67,8 @@ export default function App() {
       <main className="flex-1">
         {/* Hero Section: full-screen, edge-to-edge welcome */}
         <section className="relative isolate flex items-center min-h-[calc(100svh-4rem)] overflow-hidden bg-[#C9DFEA]">
-          {/* Background photo spanning the full width of the screen */}
-          <motion.div
-            className="absolute inset-0 -z-20"
-            initial={{ scale: 1.08 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 6, ease: EASE_OUT }}
-          >
-            <ResilientImage
-              src={HERO_IMAGE.src}
-              srcSet={HERO_IMAGE.srcSet}
-              sizes={HERO_IMAGE.sizes}
-              loading="eager"
-              fetchPriority="high"
-              width={1376}
-              height={768}
-              alt="Small business owner and financial advisor reviewing business performance charts together at a sunlit oak table"
-              fallbackTitle="SIBONTA Finance Ltd"
-              className="w-full h-full object-cover object-[70%_center]"
-            />
-          </motion.div>
+          {/* Background photos: a slow crossfading, zooming slideshow across the full width */}
+          <HeroSlideshow />
           {/* Ice-blue fade so the text stays clear over the photo */}
           <div
             aria-hidden="true"
