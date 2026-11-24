@@ -389,6 +389,18 @@ export const QUICK_DECLARATION =
 const sameName = (message: string) => (v: string, d: ApplicationData) =>
   normaliseName(v) === normaliseName((d.fullName as string) ?? '') ? undefined : message;
 
+/** Rwanda's 30 districts, in alphabetical order. */
+export const RWANDA_DISTRICTS = [
+  'Bugesera', 'Burera', 'Gakenke', 'Gasabo', 'Gatsibo', 'Gicumbi', 'Gisagara', 'Huye',
+  'Kamonyi', 'Karongi', 'Kayonza', 'Kicukiro', 'Kirehe', 'Muhanga', 'Musanze', 'Ngoma',
+  'Ngororero', 'Nyabihu', 'Nyagatare', 'Nyamagabe', 'Nyamasheke', 'Nyanza', 'Nyarugenge',
+  'Nyaruguru', 'Rubavu', 'Ruhango', 'Rulindo', 'Rusizi', 'Rutsiro', 'Rwamagana',
+];
+
+/** A real place name: at least 2 letters, no digits-only or symbol-only answers. */
+const placeName = (what: string) => (v: string) =>
+  /\p{L}.*\p{L}/u.test(v.trim()) ? undefined : `Please enter the name of your ${what}.`;
+
 export const QUICK_STEPS: Step[] = [
   {
     id: 'q-personal',
@@ -417,14 +429,10 @@ export const QUICK_STEPS: Step[] = [
         hint: PHONE_HINT,
         validate: (v) => validatePhone(v),
       },
-      {
-        name: 'location',
-        label: 'District, Sector, Cell, Village',
-        type: 'text',
-        required: true,
-        placeholder: 'e.g. Kicukiro, Gatenga, Karambo, Amahoro',
-        full: true,
-      },
+      { name: 'district', label: 'District', type: 'select', options: RWANDA_DISTRICTS, required: true },
+      { name: 'sector', label: 'Sector', type: 'text', required: true, placeholder: 'e.g. Gatenga', validate: placeName('sector') },
+      { name: 'cell', label: 'Cell', type: 'text', required: true, placeholder: 'e.g. Karambo', validate: placeName('cell') },
+      { name: 'village', label: 'Village (Umudugudu)', type: 'text', required: true, placeholder: 'e.g. Amahoro', validate: placeName('village') },
       { name: 'qEmployment', label: 'Employment / business', type: 'radio', options: ['Salaried', 'Self-employed', 'Other'], required: true },
       { name: 'qEmploymentOther', label: 'Please specify', type: 'text', showIf: (d) => d.qEmployment === 'Other' },
       { name: 'employerName', label: 'Employer / business name', type: 'text', required: true },
