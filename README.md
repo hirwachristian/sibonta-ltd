@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/images/logo-128.webp" alt="SIBONTA Finance Ltd logo" width="96" />
+<img src="public/images/email-logo.png" alt="SIBONTA Finance Ltd logo" width="120" />
 
 # SIBONTA Finance Ltd
 
