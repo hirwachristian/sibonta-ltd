@@ -4,7 +4,7 @@ import { ResilientImage } from './ResilientImage';
 import { HERO_SLIDES } from '../config/images';
 
 /** How long each photo stays on screen, and how long the crossfade takes (seconds). */
-const SLIDE_SECONDS = 3;
+const SLIDE_SECONDS = 5;
 const FADE_SECONDS = 1.2;
 
 /** Loads an image (the size the browser would pick) and resolves once it can be shown. */
