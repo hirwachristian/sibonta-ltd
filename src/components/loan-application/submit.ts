@@ -15,11 +15,12 @@ export async function submitLoanApplication(
   applicantName: string,
   applicantEmail?: string,
   website = '',
+  formType: 'quick' | 'full' = 'full',
 ): Promise<void> {
   const res = await fetch('/api/loan-application', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ reference, answers, applicantName, applicantEmail, website }),
+    body: JSON.stringify({ reference, answers, applicantName, applicantEmail, website, formType }),
   });
 
   let body: { ok?: boolean; error?: string } = {};

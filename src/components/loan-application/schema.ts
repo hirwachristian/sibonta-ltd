@@ -62,6 +62,8 @@ export interface Field {
   validate?: (value: string, d: ApplicationData) => string | undefined;
   /** Convert typing to capital letters (passport numbers). */
   uppercase?: boolean;
+  /** Declaration text shown above a consent checkbox (defaults to DECLARATIONS). */
+  declarations?: string[];
 }
 
 export interface Step {
@@ -107,7 +109,16 @@ export const STEPS: Step[] = [
     fields: [
       { name: 'product', label: 'Loan product', type: 'radio', options: LOAN_PRODUCTS, required: true, full: true },
       { name: 'productOther', label: 'Other product (please specify)', type: 'text', required: true, full: true, showIf: (d) => d.product === 'Other' },
-      { name: 'amount', label: 'Amount requested (RWF)', type: 'money', required: true },
+      {
+        name: 'amount',
+        label: 'Amount requested (RWF)',
+        type: 'money',
+        required: true,
+        validate: (v) =>
+          Number(v) <= QUICK_LOAN_LIMIT
+            ? `Amounts up to ${formatRwf(String(QUICK_LOAN_LIMIT))} use the Quick Loan Application. Go back to the first screen to switch.`
+            : undefined,
+      },
       { name: 'termMonths', label: 'Requested loan term (months)', type: 'number', required: true },
       { name: 'disbursementDate', label: 'Preferred disbursement date', type: 'date' },
       { name: 'purpose', label: 'Purpose of loan / use of funds', type: 'textarea', required: true, full: true },
@@ -361,6 +372,160 @@ export const STEPS: Step[] = [
   },
 ];
 
+/* ------------------------------------------------------------------ */
+/* Quick Loan Application Form (amounts up to RWF 1,000,000)           */
+/* ------------------------------------------------------------------ */
+
+/** Loans up to and including this amount use the Quick Loan Application Form. */
+export const QUICK_LOAN_LIMIT = 1_000_000;
+
+export type FormType = 'quick' | 'full';
+export const formTypeFor = (amount: string): FormType =>
+  Number(amount) <= QUICK_LOAN_LIMIT ? 'quick' : 'full';
+
+export const QUICK_DECLARATION =
+  'I confirm that the information provided is true and accurate to the best of my knowledge. I understand that submitting this application does not guarantee loan approval. I authorise SIBONTA Finance Ltd to verify the information provided and carry out the necessary credit assessment in accordance with applicable laws and regulations.';
+
+const sameName = (message: string) => (v: string, d: ApplicationData) =>
+  normaliseName(v) === normaliseName((d.fullName as string) ?? '') ? undefined : message;
+
+export const QUICK_STEPS: Step[] = [
+  {
+    id: 'q-personal',
+    number: 1,
+    title: 'Personal Information',
+    description: 'Please enter your details exactly as they appear on your National ID.',
+    fields: [
+      { name: 'applicationDate', label: 'Application date', type: 'date', required: true },
+      { name: 'fullName', label: 'Full name', type: 'text', required: true },
+      {
+        name: 'nationalId',
+        label: 'National ID number',
+        type: 'text',
+        required: true,
+        uppercase: true,
+        placeholder: 'e.g. 1 1990 8 0012345 0 67',
+        hint: ID_HINT,
+        validate: (v) => validateIdOrPassport(v),
+      },
+      {
+        name: 'mobile',
+        label: 'Mobile number',
+        type: 'tel',
+        required: true,
+        placeholder: '078 123 4567',
+        hint: PHONE_HINT,
+        validate: (v) => validatePhone(v),
+      },
+      {
+        name: 'location',
+        label: 'District, Sector, Cell, Village',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g. Kicukiro, Gatenga, Karambo, Amahoro',
+        full: true,
+      },
+      { name: 'qEmployment', label: 'Employment / business', type: 'radio', options: ['Salaried', 'Self-employed', 'Other'], required: true },
+      { name: 'qEmploymentOther', label: 'Please specify', type: 'text', showIf: (d) => d.qEmployment === 'Other' },
+      { name: 'employerName', label: 'Employer / business name', type: 'text', required: true },
+      { name: 'email', label: 'Email address (optional)', type: 'email', hint: 'We will send your confirmation here.' },
+    ],
+  },
+  {
+    id: 'q-loan',
+    number: 2,
+    title: 'Loan Request',
+    description: 'Tell us how much you need, for how long and what it is for.',
+    fields: [
+      {
+        name: 'amount',
+        label: 'Loan amount requested (RWF)',
+        type: 'money',
+        required: true,
+        hint: "Quick loans are for up to RWF 1,000,000.",
+        validate: (v) =>
+          Number(v) < 1
+            ? 'Please enter the amount you need.'
+            : Number(v) > QUICK_LOAN_LIMIT
+              ? `For more than ${formatRwf(String(QUICK_LOAN_LIMIT))}, go back to the first screen to switch to the full application.`
+              : undefined,
+      },
+      {
+        name: 'qPeriod',
+        label: 'Preferred repayment period',
+        type: 'radio',
+        options: ['1 month', '2 months', '3 months', '4 to 6 months'],
+        required: true,
+      },
+      {
+        name: 'qPurpose',
+        label: 'Purpose',
+        type: 'radio',
+        options: ['Business', 'Emergency', 'Education', 'Personal', 'Other'],
+        required: true,
+        full: true,
+      },
+      { name: 'qPurposeOther', label: 'If other, please specify', type: 'text', required: true, full: true, showIf: (d) => d.qPurpose === 'Other' },
+    ],
+  },
+  {
+    id: 'q-financial',
+    number: 3,
+    title: 'Financial Information',
+    description: 'Your monthly figures help us offer a repayment you can comfortably afford.',
+    fields: [
+      { name: 'qMainIncome', label: 'Main monthly income (RWF)', type: 'money', required: true },
+      { name: 'qOtherIncome', label: 'Other monthly income, if any (RWF)', type: 'money' },
+      { name: 'qExistingRepayments', label: 'Existing loan repayments per month (RWF)', type: 'money', hint: 'Enter 0 if you have no loans.' },
+      { name: 'qOtherExpenses', label: 'Other major monthly expenses (RWF)', type: 'money' },
+    ],
+  },
+  {
+    id: 'q-repayment',
+    number: 4,
+    title: 'Repayment Information',
+    description: 'Tell us how much you can repay each month and where the money will come from.',
+    fields: [
+      { name: 'qRepaymentCapacity', label: 'Expected monthly repayment capacity (RWF)', type: 'money', required: true },
+      { name: 'qRepaymentSource', label: 'Repayment source', type: 'radio', options: ['Salary', 'Business', 'Other'], required: true },
+      { name: 'qRepaymentSourceOther', label: 'Please specify', type: 'text', required: true, showIf: (d) => d.qRepaymentSource === 'Other' },
+    ],
+  },
+  {
+    id: 'q-declaration',
+    number: 5,
+    title: 'Applicant’s Declaration',
+    description: 'Please read the declaration, then sign and choose how we should contact you.',
+    fields: [
+      {
+        name: 'qConsent',
+        label: 'I have read and agree to this declaration',
+        type: 'consent',
+        required: true,
+        full: true,
+        declarations: [QUICK_DECLARATION],
+      },
+      {
+        name: 'qApplicantName',
+        label: 'Applicant’s name',
+        type: 'text',
+        required: true,
+        validate: sameName('This must match the full name you entered in Section 1.'),
+      },
+      {
+        name: 'qSignature',
+        label: 'Signature (type your full name)',
+        type: 'text',
+        required: true,
+        hint: 'Your typed name is your electronic signature. A thumbprint can be taken at our office if needed.',
+        validate: sameName('Please sign with the same full name you entered in Section 1.'),
+      },
+      { name: 'qDeclarationDate', label: 'Date', type: 'date', required: true },
+      { name: 'qContactMethod', label: 'Preferred contact method', type: 'radio', options: ['Call', 'SMS', 'WhatsApp'], required: true },
+    ],
+  },
+];
+
 export const INITIAL_DATA: ApplicationData = {
   existingLoans: [],
   collateral: [],
@@ -368,7 +533,8 @@ export const INITIAL_DATA: ApplicationData = {
   consent: false,
 };
 
-export const visibleSteps = (d: ApplicationData) => STEPS.filter((s) => !s.showIf || s.showIf(d));
+export const stepsFor = (d: ApplicationData) => (d.formType === 'quick' ? QUICK_STEPS : STEPS);
+export const visibleSteps = (d: ApplicationData) => stepsFor(d).filter((s) => !s.showIf || s.showIf(d));
 export const visibleFields = (step: Step, d: ApplicationData) =>
   step.fields.filter((f) => !f.showIf || f.showIf(d));
 
@@ -381,7 +547,9 @@ export function validateStep(step: Step, d: ApplicationData): Record<string, str
     const v = d[f.name];
     if (f.required && isEmpty(v)) {
       errors[f.name] =
-        f.type === 'consent' ? 'Please agree to the declarations to submit.' : 'This field is required.';
+        f.type === 'consent'
+          ? `Please agree to the declaration${f.declarations?.length === 1 ? '' : 's'} to submit.`
+          : 'This field is required.';
       continue;
     }
     if (isEmpty(v)) continue;
@@ -434,7 +602,7 @@ export function toSubmission(d: ApplicationData): Record<string, string> {
       } else if (f.type === 'checks') {
         out[key] = (v as string[]).join(', ');
       } else if (f.type === 'consent') {
-        out[key] = 'Agreed to declarations 1 to 5';
+        out[key] = f.declarations?.length === 1 ? 'Agreed to the declaration' : 'Agreed to declarations 1 to 5';
       } else if (f.type === 'money') {
         out[key] = formatRwf(v as string);
       } else if (f.type === 'date') {

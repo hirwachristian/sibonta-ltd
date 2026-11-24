@@ -102,11 +102,17 @@ export function FieldInput({ field, data, error, onChange }: Props) {
     case 'consent':
       return (
         <div className={wrapper}>
-          <ol className="space-y-3 p-5 rounded-xl bg-[#F4F8FB] border border-slate-200 text-sm text-slate-700 leading-relaxed list-decimal list-outside pl-9">
-            {DECLARATIONS.map((d) => (
-              <li key={d.slice(0, 24)}>{d}</li>
-            ))}
-          </ol>
+          {(field.declarations ?? DECLARATIONS).length === 1 ? (
+            <p className="p-5 rounded-xl bg-[#F4F8FB] border border-slate-200 text-sm text-slate-700 leading-relaxed">
+              {(field.declarations ?? DECLARATIONS)[0]}
+            </p>
+          ) : (
+            <ol className="space-y-3 p-5 rounded-xl bg-[#F4F8FB] border border-slate-200 text-sm text-slate-700 leading-relaxed list-decimal list-outside pl-9">
+              {(field.declarations ?? DECLARATIONS).map((d) => (
+                <li key={d.slice(0, 24)}>{d}</li>
+              ))}
+            </ol>
+          )}
           <label className="mt-4 flex items-start gap-3 cursor-pointer">
             <input
               id={id}
@@ -231,6 +237,8 @@ function autoComplete(name: string) {
     {
       fullName: 'name',
       signatureName: 'name',
+      qApplicantName: 'name',
+      qSignature: 'name',
       mobile: 'tel',
       altPhone: 'tel',
       email: 'email',

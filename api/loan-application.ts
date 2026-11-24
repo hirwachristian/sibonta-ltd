@@ -41,45 +41,55 @@ export async function POST(request: Request): Promise<Response> {
     timeStyle: 'short',
   });
 
-  const product = pick(answers, 'Loan product');
+  const isQuick = body.formType === 'quick';
+  const formName = isQuick ? 'Quick Loan Application' : 'Full Loan Application';
+  const kind = isQuick ? 'quick loan application' : 'loan application';
+
+  const purpose = pick(answers, 'Loan Request: If other') || pick(answers, 'Loan Request: Purpose');
+  const product = isQuick ? `Quick loan${purpose ? ` (${purpose})` : ''}` : pick(answers, 'Loan product');
   const amount = pick(answers, 'Amount requested');
-  const term = pick(answers, 'Requested loan term');
-  const mobile = pick(answers, 'Mobile telephone');
-  const netIncome = pick(answers, 'Net monthly salary');
-  const employment = pick(answers, 'Employment type');
-  const business = pick(answers, 'Registered business name');
+  const term = isQuick ? pick(answers, 'Preferred repayment period') : pick(answers, 'Requested loan term');
+  const mobile = pick(answers, isQuick ? 'Mobile number' : 'Mobile telephone');
+  const netIncome = pick(answers, isQuick ? 'Main monthly income' : 'Net monthly salary');
+  const employment = pick(answers, isQuick ? 'Personal Information: Employment' : 'Employment type');
+  const business = isQuick ? pick(answers, 'Employer / business name') : pick(answers, 'Registered business name');
+  const capacity = isQuick ? pick(answers, 'Expected monthly repayment capacity') : '';
+  const contactMethod = isQuick ? pick(answers, 'Preferred contact method') : '';
 
   // 1. Application to the SIBONTA team
   try {
     await sendEmail({
       to: [{ email: COMPANY_INBOX, name: 'SIBONTA Finance Ltd' }],
       replyTo: hasEmail ? { email: applicantEmail, name: applicantName } : undefined,
-      subject: `New loan application ${reference}: ${applicantName}${amount ? `, ${amount}` : ''}`,
+      subject: `New ${kind} ${reference}: ${applicantName}${amount ? `, ${amount}` : ''}`,
       tags: ['loan-application'],
       html: emailLayout({
         preheader: `${applicantName} applied for ${product || 'a loan'}${amount ? ` (${amount})` : ''}.`,
-        eyebrow: 'New loan application',
+        eyebrow: `New ${kind}`,
         title: `${reference} · ${applicantName}`,
         intro: `Received ${escapeHtml(received)} (Kigali time) through the website.${
           hasEmail ? ' Reply to this email to contact the applicant directly.' : ''
         }`,
         body:
           keyFacts([
+            ['Application form', formName],
             ['Loan product', product],
             ['Amount requested', amount],
-            ['Loan term', term ? `${term} months` : ''],
+            ['Repayment period', isQuick ? term : term ? `${term} months` : ''],
             ['Mobile', mobile],
+            ['Preferred contact', contactMethod],
             ['Email', hasEmail ? applicantEmail : ''],
-            ['Net monthly income', netIncome],
+            [isQuick ? 'Main monthly income' : 'Net monthly income', netIncome],
+            ['Repayment capacity', capacity],
             ['Employment', employment],
-            ['Business', business],
+            [isQuick ? 'Employer / business' : 'Business', business],
           ]) +
           (mobile ? button(`Call ${applicantName.split(' ')[0]}`, `tel:${mobile.replace(/[^\d+]/g, '')}`) : '') +
           answersSections(answers),
         footnote:
           'Confidential: this email contains personal and financial information. Store and share it only as permitted by applicable data protection rules.',
       }),
-      text: `New loan application ${reference}\nApplicant: ${applicantName}\nReceived: ${received} (Kigali time)\n\n${answersText(answers)}`,
+      text: `New ${kind} ${reference} (${formName})\nApplicant: ${applicantName}\nReceived: ${received} (Kigali time)\n\n${answersText(answers)}`,
     });
   } catch (err) {
     console.error('loan-application: company email failed', err);

@@ -1,15 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Clock, FileText, Loader2, X } from 'lucide-react';
 import { LOGO_SRC as logo } from '../../config/images';
 import { FieldInput } from './FieldInput';
 import {
   INITIAL_DATA,
+  QUICK_LOAN_LIMIT,
+  formTypeFor,
+  formatRwf,
   toSubmission,
   validateStep,
   visibleFields,
   visibleSteps,
   type ApplicationData,
+  type Field,
+  type FormType,
   type Value,
 } from './schema';
 import { COMPANY_EMAIL, COMPANY_PHONE, submitLoanApplication } from './submit';
@@ -43,6 +48,27 @@ function clearDraft() {
   }
 }
 
+/** Today's date as YYYY-MM-DD in the visitor's own time zone. */
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const AMOUNT_FIELD: Field = {
+  name: 'amount',
+  label: 'Loan amount you want to request (RWF)',
+  type: 'money',
+  required: true,
+  full: true,
+  placeholder: '',
+};
+
+const FORM_COPY: Record<'start' | FormType, { title: string; subtitle: string }> = {
+  start: { title: 'Apply for a Loan', subtitle: 'SIBONTA Finance Ltd · Finance Today • Better Tomorrow' },
+  quick: { title: 'Quick Loan Application Form', subtitle: 'SIBONTA Finance Ltd · Simple, quick and takes about 5 to 7 minutes' },
+  full: { title: 'Loan Application Form', subtitle: 'SIBONTA Finance Ltd · Finance Today • Better Tomorrow' },
+};
+
 type Status = 'editing' | 'submitting' | 'success' | 'error';
 
 interface LoanApplicationProps {
@@ -65,11 +91,18 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
   const honeypotRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
+  /** Before a form is chosen, the applicant first enters the amount they need. */
+  const formType = (data.formType as FormType | '') || undefined;
+  const onStart = !formType;
+  const copy = FORM_COPY[formType ?? 'start'];
+  const amountDigits = (data.amount as string) ?? '';
+  const suggestedForm: FormType | undefined = Number(amountDigits) > 0 ? formTypeFor(amountDigits) : undefined;
+
   const steps = useMemo(() => visibleSteps(data), [data]);
   const index = Math.min(stepIndex, steps.length - 1);
   const step = steps[index];
   const isLast = index === steps.length - 1;
-  const fields = visibleFields(step, data);
+  const fields = onStart ? [AMOUNT_FIELD] : visibleFields(step, data);
 
   // Pre-select the product chosen elsewhere on the site.
   useEffect(() => {
@@ -120,7 +153,35 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
     el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   };
 
+  const handleStart = () => {
+    if (!(Number(amountDigits) > 0)) {
+      const errs = { amount: 'Please enter the amount you would like to request.' };
+      setErrors(errs);
+      focusFirstError(errs);
+      return;
+    }
+    const chosen = formTypeFor(amountDigits);
+    const date = today();
+    setErrors({});
+    setData((d) => ({
+      ...d,
+      formType: chosen,
+      // The quick form's dates start as today; the applicant can still change them.
+      ...(chosen === 'quick' && {
+        applicationDate: (d.applicationDate as string) || date,
+        qDeclarationDate: (d.qDeclarationDate as string) || date,
+      }),
+    }));
+    setStepIndex(0);
+    setStatus('editing');
+    goToTop();
+  };
+
   const handleNext = async () => {
+    if (onStart) {
+      handleStart();
+      return;
+    }
     const errs = validateStep(step, data);
     setErrors(errs);
     if (Object.keys(errs).length) {
@@ -128,6 +189,10 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
       return;
     }
     if (!isLast) {
+      // Pre-fill the declaration name with the name from Section 1.
+      if (formType === 'quick' && steps[index + 1]?.id === 'q-declaration' && !data.qApplicantName) {
+        setData((d) => ({ ...d, qApplicantName: d.fullName }));
+      }
       setStepIndex(index + 1);
       goToTop();
       return;
@@ -143,6 +208,7 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
         (data.fullName as string) || 'Applicant',
         (data.email as string) || undefined,
         honeypotRef.current?.value ?? '',
+        formType ?? 'full',
       );
       setReference(ref);
       setStatus('success');
@@ -156,7 +222,13 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
 
   const handleBack = () => {
     setErrors({});
-    setStepIndex(Math.max(0, index - 1));
+    setStatus('editing');
+    if (index === 0) {
+      // Back to the amount screen (answers are kept).
+      setData((d) => ({ ...d, formType: '' }));
+    } else {
+      setStepIndex(index - 1);
+    }
     goToTop();
   };
 
@@ -198,9 +270,9 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
                   <img src={logo} alt="" className="w-9 h-9 sm:w-11 sm:h-11 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p id="loan-app-title" className="font-display text-base sm:text-xl font-semibold text-[#082E43] leading-tight">
-                      Loan Application Form
+                      {copy.title}
                     </p>
-                    <p className="hidden sm:block text-xs text-slate-500">SIBONTA Finance Ltd · Finance Today • Better Tomorrow</p>
+                    <p className="hidden sm:block text-xs text-slate-500">{copy.subtitle}</p>
                   </div>
                   <button
                     type="button"
@@ -212,7 +284,7 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
                   </button>
                 </div>
 
-                {status !== 'success' && (
+                {status !== 'success' && !onStart && (
                   <div className="px-5 sm:px-8 pb-4">
                     <div className="flex items-center justify-between text-xs font-medium text-slate-500 mb-2">
                       <span>
@@ -254,8 +326,51 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
                     className="absolute -left-[9999px] w-px h-px opacity-0"
                   />
                   <AnimatePresence mode="wait" initial={false}>
+                    {onStart ? (
+                      <motion.div
+                        key="start"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                        className="px-5 sm:px-8 py-8"
+                      >
+                        <p className="font-mono text-xs font-semibold text-[#C27803]">Getting started</p>
+                        <h2
+                          ref={headingRef}
+                          tabIndex={-1}
+                          className="mt-1 font-display text-2xl font-semibold text-slate-900 tracking-tight outline-none"
+                        >
+                          How much would you like to borrow?
+                        </h2>
+                        <p className="mt-1.5 text-sm text-slate-600">
+                          Enter the amount first. We will open the application form that fits your request.
+                        </p>
+
+                        <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          <FieldInput field={AMOUNT_FIELD} data={data} error={errors.amount} onChange={handleChange} />
+                        </div>
+
+                        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <FormOption
+                            active={suggestedForm === 'quick'}
+                            icon={<Clock className="w-5 h-5" aria-hidden="true" />}
+                            title="Quick Loan Application"
+                            range={`Up to ${formatRwf(String(QUICK_LOAN_LIMIT))}`}
+                            text="5 short sections. Takes about 5 to 7 minutes."
+                          />
+                          <FormOption
+                            active={suggestedForm === 'full'}
+                            icon={<FileText className="w-5 h-5" aria-hidden="true" />}
+                            title="Full Loan Application"
+                            range={`Above ${formatRwf(String(QUICK_LOAN_LIMIT))}`}
+                            text="Detailed form with income, business, guarantor and collateral details."
+                          />
+                        </div>
+                      </motion.div>
+                    ) : (
                     <motion.div
-                      key={step.id}
+                      key={`${formType}-${step.id}`}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
@@ -311,6 +426,7 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
                         </div>
                       )}
                     </motion.div>
+                    )}
                   </AnimatePresence>
 
                   {/* Footer actions */}
@@ -318,7 +434,7 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
                     <button
                       type="button"
                       onClick={handleBack}
-                      disabled={index === 0 || status === 'submitting'}
+                      disabled={onStart || status === 'submitting'}
                       className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-[#082E43] border border-slate-300 hover:border-[#082E43] rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <ArrowLeft className="w-4 h-4" aria-hidden="true" />
@@ -333,6 +449,11 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                           Sending…
+                        </>
+                      ) : onStart ? (
+                        <>
+                          {suggestedForm === 'quick' ? 'Start Quick Application' : suggestedForm === 'full' ? 'Start Full Application' : 'Continue'}
+                          <ArrowRight className="w-4 h-4" aria-hidden="true" />
                         </>
                       ) : isLast ? (
                         <>
@@ -354,6 +475,42 @@ export function LoanApplication({ open, onClose, initialProduct }: LoanApplicati
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+function FormOption({
+  active,
+  icon,
+  title,
+  range,
+  text,
+}: {
+  active: boolean;
+  icon: ReactNode;
+  title: string;
+  range: string;
+  text: string;
+}) {
+  return (
+    <div
+      aria-current={active ? 'true' : undefined}
+      className={`flex gap-3 p-4 rounded-xl border transition-colors duration-200 ${
+        active ? 'border-[#073035] bg-[#073035]/[0.06] ring-1 ring-[#073035]' : 'border-slate-200 bg-[#F4F8FB]'
+      }`}
+    >
+      <span
+        className={`mt-0.5 inline-flex items-center justify-center w-9 h-9 rounded-lg shrink-0 ${
+          active ? 'bg-[#073035] text-white' : 'bg-[#E3EEF4] text-[#082E43]'
+        }`}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <p className="text-xs font-semibold text-[#7A4E00] tabular-nums">{range}</p>
+        <p className="mt-1 text-xs text-slate-600 leading-relaxed">{text}</p>
+      </div>
+    </div>
   );
 }
 
