@@ -42,6 +42,12 @@ export async function POST(request: Request): Promise<Response> {
     timeStyle: 'short',
   });
 
+  // Test submissions (sent by the developer with "test": true) go only to TEST_INBOX, when it is set
+  // in Vercel. Real applications from the website never carry this flag.
+  const testInbox = process.env.TEST_INBOX?.trim();
+  const isTest = body.test === true && !!testInbox && EMAIL_RE.test(testInbox);
+  const inbox = isTest ? testInbox! : COMPANY_INBOX;
+
   const isQuick = body.formType === 'quick';
   const formName = isQuick ? 'Quick Loan Application' : 'Full Loan Application';
   const kind = isQuick ? 'quick loan application' : 'loan application';
@@ -75,7 +81,16 @@ export async function POST(request: Request): Promise<Response> {
   // If it ever fails, the email still goes out with all answers in the body.
   let attachments: { name: string; content: string }[] | undefined;
   try {
-    const pdfBytes = await buildApplicationPdf({ reference, formName, applicantName, received, keyFacts: facts, answers });
+    const pdfBytes = await buildApplicationPdf({
+      reference,
+      formName,
+      applicantName,
+      received,
+      keyFacts: facts,
+      answers,
+      eSignature: pick(answers, 'electronic signature') || pick(answers, 'Signature (type'),
+      signedOn: pick(answers, 'Declaration: Date') || received.split(',')[0],
+    });
     const safeName = applicantName.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'applicant';
     attachments = [{ name: `${reference}-${safeName}.pdf`, content: Buffer.from(pdfBytes).toString('base64') }];
   } catch (err) {
@@ -85,9 +100,9 @@ export async function POST(request: Request): Promise<Response> {
   // 1. Application to the SIBONTA team
   try {
     await sendEmail({
-      to: [{ email: COMPANY_INBOX, name: 'SIBONTA Finance Ltd' }],
+      to: [{ email: inbox, name: 'SIBONTA Finance Ltd' }],
       replyTo: hasEmail ? { email: applicantEmail, name: applicantName } : undefined,
-      subject: `New ${kind} ${reference}: ${applicantName}${amount ? `, ${amount}` : ''}`,
+      subject: `${isTest ? '[TEST] ' : ''}New ${kind} ${reference}: ${applicantName}${amount ? `, ${amount}` : ''}`,
       tags: ['loan-application'],
       attachments,
       html: emailLayout({

@@ -36,6 +36,9 @@ export interface ApplicationPdfInput {
   received: string;
   keyFacts: [string, string][];
   answers: Record<string, string>;
+  /** Name the applicant typed as their electronic signature, and the date they signed. */
+  eSignature?: string;
+  signedOn?: string;
 }
 
 /**
@@ -229,16 +232,44 @@ export async function buildApplicationPdf(input: ApplicationPdfInput): Promise<U
     y -= 22;
   }
 
+  // ---- Applicant's signature block ------------------------------------------------------------
+  const lineField = (label: string, x: number, yy: number, width: number) => {
+    text(label, x, yy, regular, 8.5, SLATE);
+    const lx = x + regular.widthOfTextAtSize(safe(label), 8.5) + 6;
+    page.drawLine({ start: { x: lx, y: yy - 2 }, end: { x: x + width, y: yy - 2 }, thickness: 0.6, color: MUTED });
+  };
+  const signH = 128;
+  ensure(signH + 10);
+  page.drawRectangle({ x: M, y: y - signH, width: CONTENT_W, height: signH, color: ICE_SOFT, borderColor: ICE, borderWidth: 0.8 });
+  page.drawRectangle({ x: M, y: y - signH, width: 4, height: signH, color: GOLD });
+  text("APPLICANT'S SIGNATURE", M + 18, y - 18, bold, 8, INK);
+  text('I confirm that the information in this application is true and complete.', M + 18, y - 33, regular, 8.5, SLATE);
+  if (input.eSignature) {
+    text('Signed electronically as', M + 18, y - 52, regular, 8.5, SLATE);
+    const sx = M + 18 + regular.widthOfTextAtSize('Signed electronically as', 8.5) + 8;
+    const sig = wrap(input.eSignature, serif, 12, 230)[0];
+    text(sig, sx, y - 53, serif, 12, INK);
+    if (input.signedOn) {
+      const dx = sx + serif.widthOfTextAtSize(sig, 12) + 14;
+      text(`on ${input.signedOn}`, dx, y - 52, regular, 8.5, SLATE);
+    }
+  }
+  // Thumbprint box on the right, signature and date lines on the left
+  const thumbW = 74;
+  const thumbX = M + CONTENT_W - 14 - thumbW;
+  page.drawRectangle({ x: thumbX, y: y - signH + 14, width: thumbW, height: 74, color: WHITE, borderColor: MUTED, borderWidth: 0.6, borderDashArray: [2, 2] });
+  const tl = 'Thumbprint';
+  text(tl, thumbX + (thumbW - regular.widthOfTextAtSize(tl, 7.5)) / 2, y - signH + 20, regular, 7.5, MUTED);
+  const signLineW = thumbX - 20 - (M + 18);
+  lineField('Applicant signature', M + 18, y - 84, signLineW);
+  lineField('Date', M + 18, y - 110, signLineW * 0.55);
+  y -= signH + 18;
+
   // ---- Office use block -----------------------------------------------------------------------
   const officeH = 118;
   ensure(officeH + 10);
   page.drawRectangle({ x: M, y: y - officeH, width: CONTENT_W, height: officeH, borderColor: SLATE, borderWidth: 0.8, borderDashArray: [3, 2] });
   text('FOR OFFICE USE ONLY', M + 14, y - 18, bold, 8, INK);
-  const lineField = (label: string, x: number, yy: number, width: number) => {
-    text(label, x, yy, regular, 8.5, SLATE);
-    const lx = x + regular.widthOfTextAtSize(label, 8.5) + 6;
-    page.drawLine({ start: { x: lx, y: yy - 2 }, end: { x: x + width, y: yy - 2 }, thickness: 0.6, color: MUTED });
-  };
   const half = (CONTENT_W - 28 - 24) / 2;
   const c1 = M + 14;
   const c2 = M + 14 + half + 24;
