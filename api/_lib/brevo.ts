@@ -53,6 +53,8 @@ export async function sendEmail(opts: {
   text: string;
   replyTo?: Recipient;
   tags?: string[];
+  /** Files to attach, as base64 content (e.g. the application PDF). */
+  attachments?: { name: string; content: string }[];
 }): Promise<void> {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
@@ -71,6 +73,7 @@ export async function sendEmail(opts: {
       htmlContent: opts.html,
       textContent: opts.text,
       tags: opts.tags,
+      attachment: opts.attachments?.length ? opts.attachments : undefined,
     }),
   });
 
@@ -168,7 +171,7 @@ export function keyFacts(rows: [string, string][]): string {
 }
 
 /** Splits "Section: Field" labels into ordered sections. */
-function groupAnswers(answers: Record<string, string>): { section: string; rows: [string, string][] }[] {
+export function groupAnswers(answers: Record<string, string>): { section: string; rows: [string, string][] }[] {
   const groups: { section: string; rows: [string, string][] }[] = [];
   for (const [rawLabel, value] of Object.entries(answers)) {
     const split = rawLabel.indexOf(': ');

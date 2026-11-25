@@ -14,6 +14,7 @@ import {
   pick,
   sendEmail,
 } from './_lib/brevo.js';
+import { buildApplicationPdf } from './_lib/applicationPdf.js';
 
 /** Receives a completed loan application and emails it to the company inbox via Brevo. */
 export async function POST(request: Request): Promise<Response> {
@@ -56,6 +57,31 @@ export async function POST(request: Request): Promise<Response> {
   const capacity = isQuick ? pick(answers, 'Expected monthly repayment capacity') : '';
   const contactMethod = isQuick ? pick(answers, 'Preferred contact method') : '';
 
+  const facts: [string, string][] = [
+    ['Application form', formName],
+    ['Loan product', product],
+    ['Amount requested', amount],
+    ['Repayment period', isQuick ? term : term ? `${term} months` : ''],
+    ['Mobile', mobile],
+    ['Preferred contact', contactMethod],
+    ['Email', hasEmail ? applicantEmail : ''],
+    [isQuick ? 'Main monthly income' : 'Net monthly income', netIncome],
+    ['Repayment capacity', capacity],
+    ['Employment', employment],
+    [isQuick ? 'Employer / business' : 'Business', business],
+  ];
+
+  // PDF copy of the application for the team to download, print and file.
+  // If it ever fails, the email still goes out with all answers in the body.
+  let attachments: { name: string; content: string }[] | undefined;
+  try {
+    const pdfBytes = await buildApplicationPdf({ reference, formName, applicantName, received, keyFacts: facts, answers });
+    const safeName = applicantName.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'applicant';
+    attachments = [{ name: `${reference}-${safeName}.pdf`, content: Buffer.from(pdfBytes).toString('base64') }];
+  } catch (err) {
+    console.error('loan-application: PDF failed', err);
+  }
+
   // 1. Application to the SIBONTA team
   try {
     await sendEmail({
@@ -63,27 +89,18 @@ export async function POST(request: Request): Promise<Response> {
       replyTo: hasEmail ? { email: applicantEmail, name: applicantName } : undefined,
       subject: `New ${kind} ${reference}: ${applicantName}${amount ? `, ${amount}` : ''}`,
       tags: ['loan-application'],
+      attachments,
       html: emailLayout({
         preheader: `${applicantName} applied for ${product || 'a loan'}${amount ? ` (${amount})` : ''}.`,
         eyebrow: `New ${kind}`,
         title: `${reference} · ${applicantName}`,
         intro: `Received ${escapeHtml(received)} (Kigali time) through the website.${
+          attachments ? ' The full application is attached as a PDF to download, print or file.' : ''
+        }${
           hasEmail ? ' Reply to this email to contact the applicant directly.' : ''
         }`,
         body:
-          keyFacts([
-            ['Application form', formName],
-            ['Loan product', product],
-            ['Amount requested', amount],
-            ['Repayment period', isQuick ? term : term ? `${term} months` : ''],
-            ['Mobile', mobile],
-            ['Preferred contact', contactMethod],
-            ['Email', hasEmail ? applicantEmail : ''],
-            [isQuick ? 'Main monthly income' : 'Net monthly income', netIncome],
-            ['Repayment capacity', capacity],
-            ['Employment', employment],
-            [isQuick ? 'Employer / business' : 'Business', business],
-          ]) +
+          keyFacts(facts) +
           (mobile ? button(`Call ${applicantName.split(' ')[0]}`, `tel:${mobile.replace(/[^\d+]/g, '')}`) : '') +
           answersSections(answers),
         footnote:

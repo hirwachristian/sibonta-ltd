@@ -136,10 +136,12 @@ Visitor fills a form ──► /api/loan-application or /api/enquiry (Vercel fun
                            ┌───────┴────────┐
                            ▼                ▼
              Company inbox email    Confirmation email
-             (all answers, reply    to the customer
-              goes to customer)     (if they gave an email)
+             (all answers + PDF     to the customer
+              of the application)   (if they gave an email)
 ```
 
+- Each loan application email to the company includes a **branded PDF of the full application**
+  (`SIB-LA-xxxxxx-Applicant-Name.pdf`) to download, print or file, with a "For office use only" box.
 - The **Brevo API key is stored only in Vercel**. It is never in the code or sent to the browser.
 - A hidden "honeypot" field quietly drops spam from bots.
 - Emails use the company branding (logo, colours) and display well on phones.
