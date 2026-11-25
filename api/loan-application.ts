@@ -42,12 +42,6 @@ export async function POST(request: Request): Promise<Response> {
     timeStyle: 'short',
   });
 
-  // Test submissions (sent by the developer with "test": true) go only to TEST_INBOX, when it is set
-  // in Vercel. Real applications from the website never carry this flag.
-  const testInbox = process.env.TEST_INBOX?.trim();
-  const isTest = body.test === true && !!testInbox && EMAIL_RE.test(testInbox);
-  const inbox = isTest ? testInbox! : COMPANY_INBOX;
-
   const isQuick = body.formType === 'quick';
   const formName = isQuick ? 'Quick Loan Application' : 'Full Loan Application';
   const kind = isQuick ? 'quick loan application' : 'loan application';
@@ -100,9 +94,9 @@ export async function POST(request: Request): Promise<Response> {
   // 1. Application to the SIBONTA team
   try {
     await sendEmail({
-      to: [{ email: inbox, name: 'SIBONTA Finance Ltd' }],
+      to: [{ email: COMPANY_INBOX, name: 'SIBONTA Finance Ltd' }],
       replyTo: hasEmail ? { email: applicantEmail, name: applicantName } : undefined,
-      subject: `${isTest ? '[TEST] ' : ''}New ${kind} ${reference}: ${applicantName}${amount ? `, ${amount}` : ''}`,
+      subject: `New ${kind} ${reference}: ${applicantName}${amount ? `, ${amount}` : ''}`,
       tags: ['loan-application'],
       attachments,
       html: emailLayout({
